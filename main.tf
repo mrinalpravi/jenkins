@@ -1,29 +1,3 @@
-resource "aws_security_group" "jenkins_sg" {
-  name        = "jenkins-sg-sre"
-  description = "Security group for Jenkins Server"
-
-  ingress {
-    from_port   = 8080
-    to_port     = 8080
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
 resource "tls_private_key" "key_pair" {
   algorithm = "RSA"
   rsa_bits  = 4096
@@ -42,12 +16,14 @@ resource "aws_key_pair" "generated_key" {
 
 resource "aws_instance" "jenkins" {
   ami                    = "ami-085ad6ae776d8f09c"
-  instance_type          = "t2.medium"
+  instance_type          = "t3.medium"
+  associate_public_ip_address = true
   key_name               = aws_key_pair.generated_key.key_name
-  vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
+  vpc_security_group_ids = ""
+  subnet_id              = ""
 
   root_block_device {
-    volume_size = 32
+    volume_size = 64
     volume_type = "gp3"
   }
 
@@ -62,9 +38,4 @@ resource "aws_instance" "jenkins" {
     sudo systemctl start jenkins
   EOF
 
-  tags = {
-    Name    = "JenkinsServerSRE"
-    Owner   = "SRE"
-    Managed = "Terraform"
-  }
 }
